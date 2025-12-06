@@ -1,0 +1,822 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Periodic Table — Khmer & English (Interactive)</title>
+
+<!-- Google Fonts -->
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+<!-- Khmer OS Font -->
+<style>
+@font-face {
+  font-family: 'Khmer OS';
+  src: local('Khmer OS'), local('KhmerOS');
+  font-weight: normal;
+  font-style: normal;
+}
+</style>
+
+<style>
+  :root{
+    --bg1: #0f172a;
+    --card-size: 65px; /* default desktop */
+    --gap: 10px;
+    --font-sans: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+    --font-kh: "Khmer OS", "KhmerOS", "Noto Sans Khmer", serif;
+    --glass: rgba(255,255,255,0.06);
+    --accent: linear-gradient(135deg, rgba(255,255,255,0.03), rgba(255,255,255,0.01));
+    --shadow: 0 6px 18px rgba(2,6,23,0.6);
+  }
+
+  /* Responsive card size */
+  @media (max-width: 767px){ :root{ --card-size: 45px; } }
+  @media (min-width: 768px) and (max-width:1399px){ :root{ --card-size: 55px; } }
+
+  html,body{ height:100%; margin:0; font-family:var(--font-sans); background: radial-gradient(1200px 700px at 10% 10%, rgba(64,138,255,0.06), transparent), radial-gradient(1000px 600px at 90% 90%, rgba(201,64,255,0.04), transparent), var(--bg1); color:#e6eef8; -webkit-font-smoothing:antialiased; -moz-osx-font-smoothing:grayscale; }
+
+  /* Pulsing animated gradient overlay */
+  .bg-pulse{
+    position:fixed; inset:0; pointer-events:none; z-index:0;
+    background: linear-gradient(120deg, rgba(255,255,255,0.01), rgba(255,255,255,0.02));
+    animation: pulse 8s ease-in-out infinite;
+    mix-blend-mode: overlay;
+  }
+  @keyframes pulse{
+    0%{ filter: hue-rotate(0deg) saturate(1); opacity:0.9; }
+    50%{ filter: hue-rotate(30deg) saturate(1.2); opacity:0.75; }
+    100%{ filter: hue-rotate(0deg) saturate(1); opacity:0.9; }
+  }
+
+  .container{
+    position:relative; z-index:2; max-width:1400px; margin:24px auto; padding:20px;
+  }
+
+  header{
+    display:flex; gap:16px; align-items:center; justify-content:space-between; margin-bottom:18px; flex-wrap:wrap;
+  }
+  .title{
+    display:flex; gap:14px; align-items:baseline;
+  }
+  h1{ font-size:clamp(18px, 4vw, 24px); margin:0; font-weight:700; letter-spacing:0.6px; color:#fff; }
+  h1.khmer{ font-family: var(--font-kh); }
+  p.subtitle{ margin:0; font-size:clamp(11px, 2vw, 13px); opacity:0.85; color:#dbeafe; }
+  p.subtitle.khmer{ font-family: var(--font-kh); }
+
+  /* Controls */
+  .controls{ display:flex; gap:10px; align-items:center; flex-wrap:wrap; }
+  .search {
+    display:flex; gap:8px; align-items:center; background:var(--glass); padding:8px; border-radius:10px; box-shadow:var(--shadow);
+  }
+  .search input{
+    width:260px; min-width:130px; border:0; background:transparent; color: #e6eef8; outline:none; font-size:14px; font-weight:500; transition: all 0.3s ease;
+  }
+  .search input:focus{
+    color: #fff;
+  }
+  .search input::placeholder{
+    opacity: 0.6;
+    transition: opacity 0.3s ease;
+  }
+  .search input:focus::placeholder{
+    opacity: 0.4;
+  }
+  .btn{
+    background:linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.01)); border:1px solid rgba(255,255,255,0.04);
+    color:#e6eef8; padding:8px 12px; border-radius:8px; cursor:pointer; font-weight:600; transition:all 0.2s;
+  }
+  .btn:hover{ background:linear-gradient(180deg, rgba(255,255,255,0.05), rgba(255,255,255,0.02)); transform:translateY(-1px); }
+  .btn.toggle{ display:flex; gap:8px; align-items:center; }
+
+  /* Legend */
+  .legend{ display:flex; gap:8px; flex-wrap:wrap; margin-top:6px; font-size:13px; color:#dbeafe; opacity:0.9; align-items:center }
+  .legend .chip{ padding:6px 8px; border-radius:8px; font-weight:600; display:inline-flex; gap:8px; align-items:center; }
+
+  /* Grid for elements */
+  .grid{
+    margin-top:18px;
+    display:grid;
+    grid-template-columns: repeat(18, var(--card-size));
+    grid-auto-rows: var(--card-size);
+    gap: var(--gap);
+    align-items:stretch;
+  }
+
+  /* Card base */
+  .card{
+    position:relative;
+    border-radius:8px;
+    display:flex;
+    flex-direction:column;
+    justify-content:space-between;
+    padding:6px;
+    box-shadow: 0 10px 20px rgba(2,6,23,0.6);
+    cursor:pointer;
+    transform-origin:center center;
+    transition: transform .18s ease, box-shadow .18s ease;
+    background-image: var(--accent);
+    border: 1px solid rgba(255,255,255,0.04);
+    overflow:hidden;
+    color:var(--card-text, #041426);
+  }
+
+  .card:hover{ transform: translateY(-6px) scale(1.03); box-shadow:0 16px 30px rgba(2,6,23,0.7); z-index:3; }
+
+  .num{ font-size:11px; opacity:0.9; font-weight:700; }
+  .symbol{ font-weight:800; font-size: calc(var(--card-size) * 0.36); line-height:1; }
+  .name{ font-size:11px; margin-top:2px; font-weight:700; }
+  .mass{ font-size:11px; opacity:0.9; text-align:right; }
+
+  /* Hover shine effect */
+  .card::after{
+    content:"";
+    position:absolute; inset:0;
+    background: linear-gradient(120deg, rgba(255,255,255,0.06), rgba(255,255,255,0));
+    transform: translateX(-140%) skewX(-10deg);
+    transition: transform .9s ease;
+    pointer-events:none;
+    mix-blend-mode:overlay;
+  }
+  .card:hover::after{ transform: translateX(0%) skewX(-10deg); }
+
+  /* Highlight found */
+  .found{ 
+    box-shadow: 0 8px 28px rgba(255,255,192,0.14); 
+    transform: translateY(-6px) scale(1.04); 
+    border: 1px solid rgba(255,255,255,0.18); 
+    animation: glow 2s ease-in-out infinite;
+    z-index: 5;
+    transition: all 0.3s ease;
+  }
+  @keyframes glow{
+    0%, 100%{ box-shadow: 0 8px 28px rgba(255,255,192,0.14); }
+    50%{ box-shadow: 0 8px 28px rgba(255,255,192,0.25); }
+  }
+  /* Hide non-matching cards smoothly */
+  .card:not(.found).search-active{
+    opacity: 0.3;
+    transform: scale(0.95);
+    transition: all 0.3s ease;
+  }
+
+  /* Modal */
+  .modal-backdrop{
+    position:fixed; inset:0; display:none; align-items:center; justify-content:center; z-index:50; background:linear-gradient(0deg, rgba(5,10,20,0.6), rgba(5,10,20,0.8)); backdrop-filter:blur(4px);
+  }
+  .modal{
+    width: min(680px, 94%); background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01)); border-radius:12px; padding:18px; box-shadow: 0 18px 40px rgba(2,6,23,0.7); border:1px solid rgba(255,255,255,0.05);
+  }
+  .modal h2{ margin:0 0 8px 0; font-size:20px; }
+  .modal .props{ display:grid; grid-template-columns: 1fr 1fr; gap:12px; margin-top:12px; }
+  .prop{ background: rgba(255,255,255,0.02); padding:10px; border-radius:8px; font-weight:600; display:flex; gap:10px; align-items:center; }
+  .close{ float:right; cursor:pointer; margin-top:-6px; padding:6px; border-radius:8px; background:transparent; border:0; color:#e6eef8; font-weight:700; font-size:20px; transition:transform 0.2s; }
+  .close:hover{ transform:scale(1.1); }
+
+  /* small devices modal props single column */
+  @media (max-width:600px){ .modal .props{ grid-template-columns:1fr; } }
+
+  /* Category color definitions (10 categories) */
+  .cat-alkali{ background: linear-gradient(180deg,#FF7A7A,#E74C4C); color:#fff; --card-text:#fff; }
+  .cat-alkaline{ background: linear-gradient(180deg,#FFB66A,#FF8C42); color:#fff; --card-text:#fff; }
+  .cat-transition{ background: linear-gradient(180deg,#FFE77A,#FFD23A); color:#081218; --card-text:#081218; }
+  .cat-post{ background: linear-gradient(180deg,#F7D27A,#EAB22A); color:#081218; --card-text:#081218; }
+  .cat-metalloid{ background: linear-gradient(180deg,#8EE0A4,#5CC78F); color:#081218; --card-text:#081218; }
+  .cat-nonmetal{ background: linear-gradient(180deg,#8FC7FF,#51A9FF); color:#081218; --card-text:#081218; }
+  .cat-halogen{ background: linear-gradient(180deg,#9A8CFF,#6F4CFF); color:#fff; --card-text:#fff; }
+  .cat-noble{ background: linear-gradient(180deg,#E3B9FF,#C787FF); color:#fff; --card-text:#fff; }
+  .cat-lanth{ background: linear-gradient(180deg,#DDF38C,#BCE86D); color:#081218; --card-text:#081218; }
+  .cat-act{ background: linear-gradient(180deg,#9DEBCB,#67D7A2); color:#081218; --card-text:#081218; }
+
+  /* empty slots placeholding (for periodic layout alignment) */
+  .empty{ opacity:0; pointer-events:none; background:transparent; border:0; box-shadow:none; }
+
+  /* footer info */
+  footer{ margin-top:14px; color:#cfe7ff; opacity:0.85; font-size:13px; display:flex; justify-content:space-between; flex-wrap:wrap; gap:14px; }
+  .info{ max-width:900px; }
+
+  /* sequential animation */
+  .card.animated{ opacity:0; transform: translateY(18px) scale(.98); animation:pop .45s forwards; }
+  @keyframes pop{ to{ opacity:1; transform: translateY(0) scale(1);} }
+
+  /* small helper */
+  .sr-only{ position:absolute; left:-9999px; top:auto; width:1px; height:1px; overflow:hidden; }
+
+  /* Info section */
+  .info-section{ margin-top:20px; padding:16px; background:rgba(255,255,255,0.02); border-radius:10px; border:1px solid rgba(255,255,255,0.05); }
+  .info-section h3{ margin:0 0 10px 0; font-size:16px; }
+  .info-section p{ margin:8px 0; line-height:1.6; opacity:0.9; }
+</style>
+</head>
+<body>
+
+<div class="bg-pulse" aria-hidden="true"></div>
+
+<div class="container" role="application" aria-label="Periodic Table interactive">
+  <header>
+    <div class="title">
+      <div>
+        <h1 id="mainTitle">Periodic Table — តារាងខួបនៃធាតុគីមី</h1>
+        <p class="subtitle" id="subtitle">Search elements by number, symbol, Khmer or English name • Click a card for details</p>
+      </div>
+    </div>
+
+    <div class="controls" aria-hidden="false">
+      <div class="search" role="search">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" style="opacity:0.9"><path d="M21 21l-4.35-4.35" stroke="#dbeafe" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><circle cx="10.5" cy="10.5" r="6.5" stroke="#dbeafe" stroke-width="1.6"/></svg>
+        <input id="searchInput" placeholder="Search number • symbol • name (Kh / En)" aria-label="Search elements"/>
+        <button id="resetBtn" class="btn" title="Reset search">🔄 Reset</button>
+      </div>
+
+      <button id="langToggle" class="btn toggle" title="Toggle language">🌐 <span id="langLabel">EN</span></button>
+      <button id="infoBtn" class="btn" title="Info">ℹ️ Info</button>
+    </div>
+  </header>
+
+  <div class="legend" id="legend" aria-hidden="true">
+    <div class="chip cat-alkali">Alkali</div>
+    <div class="chip cat-alkaline">Alkaline</div>
+    <div class="chip cat-transition">Transition</div>
+    <div class="chip cat-post">Post</div>
+    <div class="chip cat-metalloid">Metalloid</div>
+    <div class="chip cat-nonmetal">Nonmetal</div>
+    <div class="chip cat-halogen">Halogen</div>
+    <div class="chip cat-noble">Noble</div>
+    <div class="chip cat-lanth">Lanthanide</div>
+    <div class="chip cat-act">Actinide</div>
+  </div>
+
+  <!-- grid -->
+  <main>
+    <div id="grid" class="grid" aria-live="polite" aria-atomic="true"></div>
+  </main>
+
+  <footer>
+    <div class="info" id="footerInfo">💡 Tip: Use the search box to type "26", "Fe", "ដែក" or "Iron". Press <kbd>Esc</kbd> to close modals. The colors show categories — hover a card to see shine effect.</div>
+    <div id="footerDesign">Designed for students • Khmer/English • Responsive</div>
+  </footer>
+
+  <div class="info-section" id="infoSection" style="display:none;">
+    <h3 id="infoTitle">About the Periodic Table</h3>
+    <p id="infoText">The periodic table is a tabular arrangement of chemical elements, ordered by atomic number, electron configuration, and recurring chemical properties. Elements are listed in order of increasing atomic number and grouped according to similar chemical behavior.</p>
+  </div>
+</div>
+
+<!-- Modal (hidden) -->
+<div id="modalBackdrop" class="modal-backdrop" role="dialog" aria-modal="true" aria-hidden="true">
+  <div class="modal" role="document">
+    <button id="closeModal" class="close" aria-label="Close">✖</button>
+    <h2 id="modalTitle">Element</h2>
+    <div id="modalSubtitle" style="opacity:0.9; font-weight:600"></div>
+    <div class="props" id="modalProps"></div>
+    <p id="modalSummary" style="margin-top:12px; opacity:0.95;"></p>
+  </div>
+</div>
+
+<script>
+/* ============
+  Complete Periodic Table Data - All 118 Elements
+  Based on the Khmer periodic table image
+=============*/
+
+const ELEMENTS = [
+  // Period 1
+  { number:1, symbol:"H", name_en:"Hydrogen", name_kh:"ហ៊ីដ្រូសែន", atomic_mass:"1.008", category:"nonmetal", group:1, period:1, electronegativity:2.20, summary:"Lightest element; fuel and basic chemistry" },
+  { number:2, symbol:"He", name_en:"Helium", name_kh:"ហែល្យូម", atomic_mass:"4.0026", category:"noble", group:18, period:1, electronegativity:null, summary:"Inert gas; used in balloons and cryogenics" },
+  
+  // Period 2
+  { number:3, symbol:"Li", name_en:"Lithium", name_kh:"លីធ្យូម", atomic_mass:"6.941", category:"alkali", group:1, period:2, electronegativity:0.98, summary:"Used in batteries and light alloys" },
+  { number:4, symbol:"Be", name_en:"Beryllium", name_kh:"បេរីល្យូម", atomic_mass:"9.0122", category:"alkaline", group:2, period:2, electronegativity:1.57, summary:"Light metal used in alloys" },
+  { number:5, symbol:"B", name_en:"Boron", name_kh:"បូរ", atomic_mass:"10.811", category:"metalloid", group:13, period:2, electronegativity:2.04, summary:"Semiconductor material" },
+  { number:6, symbol:"C", name_en:"Carbon", name_kh:"កាបូន", atomic_mass:"12.011", category:"nonmetal", group:14, period:2, electronegativity:2.55, summary:"Life's backbone; many allotropes" },
+  { number:7, symbol:"N", name_en:"Nitrogen", name_kh:"អាហ្សូត", atomic_mass:"14.007", category:"nonmetal", group:15, period:2, electronegativity:3.04, summary:"Makes up 78% of air; essential for life" },
+  { number:8, symbol:"O", name_en:"Oxygen", name_kh:"អុកស៊ីសែន", atomic_mass:"15.999", category:"nonmetal", group:16, period:2, electronegativity:3.44, summary:"Essential for respiration" },
+  { number:9, symbol:"F", name_en:"Fluorine", name_kh:"ហ្វ្លួរ", atomic_mass:"18.998", category:"halogen", group:17, period:2, electronegativity:3.98, summary:"Most reactive halogen; used in toothpaste" },
+  { number:10, symbol:"Ne", name_en:"Neon", name_kh:"នីអុន", atomic_mass:"20.180", category:"noble", group:18, period:2, electronegativity:null, summary:"Inert gas used in lighting" },
+  
+  // Period 3
+  { number:11, symbol:"Na", name_en:"Sodium", name_kh:"សូដ្យូម", atomic_mass:"22.990", category:"alkali", group:1, period:3, electronegativity:0.93, summary:"Reactive metal used in salts" },
+  { number:12, symbol:"Mg", name_en:"Magnesium", name_kh:"ម៉ាញេស្យូម", atomic_mass:"24.305", category:"alkaline", group:2, period:3, electronegativity:1.31, summary:"Light metal; important for biology" },
+  { number:13, symbol:"Al", name_en:"Aluminum", name_kh:"អាលុយមីញ៉ូម", atomic_mass:"26.982", category:"post-transition", group:13, period:3, electronegativity:1.61, summary:"Light, conductive metal; most abundant in crust" },
+  { number:14, symbol:"Si", name_en:"Silicon", name_kh:"ស៊ីលីកុន", atomic_mass:"28.086", category:"metalloid", group:14, period:3, electronegativity:1.90, summary:"Semiconductor; basis of electronics" },
+  { number:15, symbol:"P", name_en:"Phosphorus", name_kh:"ផូស្ផ័រ", atomic_mass:"30.974", category:"nonmetal", group:15, period:3, electronegativity:2.19, summary:"Essential for DNA and ATP" },
+  { number:16, symbol:"S", name_en:"Sulfur", name_kh:"ស៊ុលហ្វ័រ", atomic_mass:"32.065", category:"nonmetal", group:16, period:3, electronegativity:2.58, summary:"Yellow solid; used in fertilizers" },
+  { number:17, symbol:"Cl", name_en:"Chlorine", name_kh:"ក្លរីន", atomic_mass:"35.453", category:"halogen", group:17, period:3, electronegativity:3.16, summary:"Reactive halogen used for disinfection" },
+  { number:18, symbol:"Ar", name_en:"Argon", name_kh:"អាហ្គុន", atomic_mass:"39.948", category:"noble", group:18, period:3, electronegativity:null, summary:"Inert gas; used in light bulbs" },
+  
+  // Period 4
+  { number:19, symbol:"K", name_en:"Potassium", name_kh:"ប៉ូតាស្យូម", atomic_mass:"39.098", category:"alkali", group:1, period:4, electronegativity:0.82, summary:"Reactive metal; essential for nerves" },
+  { number:20, symbol:"Ca", name_en:"Calcium", name_kh:"កាល់ស្យូម", atomic_mass:"40.078", category:"alkaline", group:2, period:4, electronegativity:1.00, summary:"Important for bones and teeth" },
+  { number:21, symbol:"Sc", name_en:"Scandium", name_kh:"ស្កង់ដ្យូម", atomic_mass:"44.956", category:"transition", group:3, period:4, electronegativity:1.36, summary:"Rare earth metal; used in alloys" },
+  { number:22, symbol:"Ti", name_en:"Titanium", name_kh:"ទីតាន្យូម", atomic_mass:"47.867", category:"transition", group:4, period:4, electronegativity:1.54, summary:"Strong, lightweight metal; aerospace applications" },
+  { number:23, symbol:"V", name_en:"Vanadium", name_kh:"វ៉ាណាដ្យូម", atomic_mass:"50.942", category:"transition", group:5, period:4, electronegativity:1.63, summary:"Used in steel alloys" },
+  { number:24, symbol:"Cr", name_en:"Chromium", name_kh:"ក្រូម្យូម", atomic_mass:"51.996", category:"transition", group:6, period:4, electronegativity:1.66, summary:"Hard metal; used in stainless steel" },
+  { number:25, symbol:"Mn", name_en:"Manganese", name_kh:"ម៉ង់ហ្គាណេស", atomic_mass:"54.938", category:"transition", group:7, period:4, electronegativity:1.55, summary:"Essential for steel production" },
+  { number:26, symbol:"Fe", name_en:"Iron", name_kh:"ដែក", atomic_mass:"55.845", category:"transition", group:8, period:4, electronegativity:1.83, summary:"Core structural metal; magnetic properties" },
+  { number:27, symbol:"Co", name_en:"Cobalt", name_kh:"កូបាល់", atomic_mass:"58.933", category:"transition", group:9, period:4, electronegativity:1.88, summary:"Used in magnets and batteries" },
+  { number:28, symbol:"Ni", name_en:"Nickel", name_kh:"នីកែល", atomic_mass:"58.693", category:"transition", group:10, period:4, electronegativity:1.91, summary:"Corrosion-resistant; used in coins" },
+  { number:29, symbol:"Cu", name_en:"Copper", name_kh:"ទង់ដែង", atomic_mass:"63.546", category:"transition", group:11, period:4, electronegativity:1.90, summary:"Conductive metal used in wiring" },
+  { number:30, symbol:"Zn", name_en:"Zinc", name_kh:"ស័ង្កសី", atomic_mass:"65.39", category:"transition", group:12, period:4, electronegativity:1.65, summary:"Used in galvanization and batteries" },
+  { number:31, symbol:"Ga", name_en:"Gallium", name_kh:"ហ្គាល្យូម", atomic_mass:"69.723", category:"post-transition", group:13, period:4, electronegativity:1.81, summary:"Melts in hand; used in semiconductors" },
+  { number:32, symbol:"Ge", name_en:"Germanium", name_kh:"ហ្ស៊ែម៉ាន្យូម", atomic_mass:"72.64", category:"metalloid", group:14, period:4, electronegativity:2.01, summary:"Semiconductor material" },
+  { number:33, symbol:"As", name_en:"Arsenic", name_kh:"អាសេនិក", atomic_mass:"74.922", category:"metalloid", group:15, period:4, electronegativity:2.18, summary:"Toxic metalloid; used in electronics" },
+  { number:34, symbol:"Se", name_en:"Selenium", name_kh:"សេលេន្យូម", atomic_mass:"78.96", category:"nonmetal", group:16, period:4, electronegativity:2.55, summary:"Essential trace element; used in photocopiers" },
+  { number:35, symbol:"Br", name_en:"Bromine", name_kh:"ប្រូមីន", atomic_mass:"79.904", category:"halogen", group:17, period:4, electronegativity:2.96, summary:"Liquid halogen; used in flame retardants" },
+  { number:36, symbol:"Kr", name_en:"Krypton", name_kh:"ក្រីបតុន", atomic_mass:"83.80", category:"noble", group:18, period:4, electronegativity:null, summary:"Inert gas; used in lighting" },
+  
+  // Period 5
+  { number:37, symbol:"Rb", name_en:"Rubidium", name_kh:"រូបីដ្យូម", atomic_mass:"85.468", category:"alkali", group:1, period:5, electronegativity:0.82, summary:"Soft, reactive alkali metal" },
+  { number:38, symbol:"Sr", name_en:"Strontium", name_kh:"ស្ត្រុង្យូម", atomic_mass:"87.62", category:"alkaline", group:2, period:5, electronegativity:0.95, summary:"Used in fireworks and flares" },
+  { number:39, symbol:"Y", name_en:"Yttrium", name_kh:"យត្ត្រុម", atomic_mass:"88.906", category:"transition", group:3, period:5, electronegativity:1.22, summary:"Rare earth; used in superconductors" },
+  { number:40, symbol:"Zr", name_en:"Zirconium", name_kh:"ហ្ស៊ីកូន្យូម", atomic_mass:"91.224", category:"transition", group:4, period:5, electronegativity:1.33, summary:"Corrosion-resistant; used in nuclear reactors" },
+  { number:41, symbol:"Nb", name_en:"Niobium", name_kh:"នីអូប្យូម", atomic_mass:"92.906", category:"transition", group:5, period:5, electronegativity:1.6, summary:"Superconductor; used in alloys" },
+  { number:42, symbol:"Mo", name_en:"Molybdenum", name_kh:"ម៉ូលីបដេនុម", atomic_mass:"95.94", category:"transition", group:6, period:5, electronegativity:2.16, summary:"Essential for enzymes; used in steel" },
+  { number:43, symbol:"Tc", name_en:"Technetium", name_kh:"តេកនេស្យូម", atomic_mass:"(98)", category:"transition", group:7, period:5, electronegativity:1.9, summary:"First synthetic element; radioactive" },
+  { number:44, symbol:"Ru", name_en:"Ruthenium", name_kh:"រូតេន្យូម", atomic_mass:"101.07", category:"transition", group:8, period:5, electronegativity:2.2, summary:"Rare metal; used in electronics" },
+  { number:45, symbol:"Rh", name_en:"Rhodium", name_kh:"រ៉ូដ្យូម", atomic_mass:"102.91", category:"transition", group:9, period:5, electronegativity:2.28, summary:"Precious metal; used in catalytic converters" },
+  { number:46, symbol:"Pd", name_en:"Palladium", name_kh:"ប៉ាល្លាដ្យូម", atomic_mass:"106.42", category:"transition", group:10, period:5, electronegativity:2.20, summary:"Precious metal; used in catalysts" },
+  { number:47, symbol:"Ag", name_en:"Silver", name_kh:"ប្រាក់", atomic_mass:"107.87", category:"transition", group:11, period:5, electronegativity:1.93, summary:"Precious metal with high conductivity" },
+  { number:48, symbol:"Cd", name_en:"Cadmium", name_kh:"កាដ្ម្យូម", atomic_mass:"112.41", category:"transition", group:12, period:5, electronegativity:1.69, summary:"Toxic metal; used in batteries" },
+  { number:49, symbol:"In", name_en:"Indium", name_kh:"អ៊ីន្ដ្យូម", atomic_mass:"114.82", category:"post-transition", group:13, period:5, electronegativity:1.78, summary:"Soft metal; used in touchscreens" },
+  { number:50, symbol:"Sn", name_en:"Tin", name_kh:"សំណ", atomic_mass:"118.71", category:"post-transition", group:14, period:5, electronegativity:1.96, summary:"Used in alloys and soldering" },
+  { number:51, symbol:"Sb", name_en:"Antimony", name_kh:"អង់ទីម៉ូនី", atomic_mass:"121.76", category:"metalloid", group:15, period:5, electronegativity:2.05, summary:"Metalloid; used in flame retardants" },
+  { number:52, symbol:"Te", name_en:"Tellurium", name_kh:"តេលុរីយូម", atomic_mass:"127.60", category:"metalloid", group:16, period:5, electronegativity:2.1, summary:"Metalloid; used in solar cells" },
+  { number:53, symbol:"I", name_en:"Iodine", name_kh:"អ៊ីអូដែន", atomic_mass:"126.90", category:"halogen", group:17, period:5, electronegativity:2.66, summary:"Essential for thyroid function" },
+  { number:54, symbol:"Xe", name_en:"Xenon", name_kh:"សេនុន", atomic_mass:"131.29", category:"noble", group:18, period:5, electronegativity:null, summary:"Inert gas; used in lighting" },
+  
+  // Period 6
+  { number:55, symbol:"Cs", name_en:"Cesium", name_kh:"សេស្យូម", atomic_mass:"132.91", category:"alkali", group:1, period:6, electronegativity:0.79, summary:"Most reactive metal; used in atomic clocks" },
+  { number:56, symbol:"Ba", name_en:"Barium", name_kh:"បារីយូម", atomic_mass:"137.33", category:"alkaline", group:2, period:6, electronegativity:0.89, summary:"Used in medical imaging" },
+  { number:57, symbol:"La", name_en:"Lanthanum", name_kh:"ឡង់ថាណូម", atomic_mass:"138.91", category:"lanth", group:null, period:6, electronegativity:1.10, summary:"First lanthanide; used in alloys" },
+  { number:72, symbol:"Hf", name_en:"Hafnium", name_kh:"ហាហ្វ្ន្យូម", atomic_mass:"178.49", category:"transition", group:4, period:6, electronegativity:1.3, summary:"Used in nuclear control rods" },
+  { number:73, symbol:"Ta", name_en:"Tantalum", name_kh:"តាន់តាលុម", atomic_mass:"180.95", category:"transition", group:5, period:6, electronegativity:1.5, summary:"Corrosion-resistant; used in electronics" },
+  { number:74, symbol:"W", name_en:"Tungsten", name_kh:"តុងស្តេន", atomic_mass:"183.84", category:"transition", group:6, period:6, electronegativity:2.36, summary:"Highest melting point; used in light bulbs" },
+  { number:75, symbol:"Re", name_en:"Rhenium", name_kh:"រេន្យូម", atomic_mass:"186.21", category:"transition", group:7, period:6, electronegativity:1.9, summary:"Rare metal; used in superalloys" },
+  { number:76, symbol:"Os", name_en:"Osmium", name_kh:"អូស្ម្យូម", atomic_mass:"190.23", category:"transition", group:8, period:6, electronegativity:2.2, summary:"Densest element; used in alloys" },
+  { number:77, symbol:"Ir", name_en:"Iridium", name_kh:"អ៊ីរីដ្យូម", atomic_mass:"192.22", category:"transition", group:9, period:6, electronegativity:2.20, summary:"Dense, corrosion-resistant metal" },
+  { number:78, symbol:"Pt", name_en:"Platinum", name_kh:"ប្លាទីន", atomic_mass:"195.08", category:"transition", group:10, period:6, electronegativity:2.28, summary:"Precious metal; used in catalysts" },
+  { number:79, symbol:"Au", name_en:"Gold", name_kh:"មាស", atomic_mass:"196.97", category:"transition", group:11, period:6, electronegativity:2.54, summary:"Precious, inert, used in jewelry and electronics" },
+  { number:80, symbol:"Hg", name_en:"Mercury", name_kh:"បារី", atomic_mass:"200.59", category:"transition", group:12, period:6, electronegativity:2.00, summary:"Liquid metal; toxic; used in thermometers" },
+  { number:81, symbol:"Tl", name_en:"Thallium", name_kh:"ថាល្ល្យូម", atomic_mass:"204.38", category:"post-transition", group:13, period:6, electronegativity:1.62, summary:"Toxic metal; used in electronics" },
+  { number:82, symbol:"Pb", name_en:"Lead", name_kh:"ដែកខ្មៅ", atomic_mass:"207.2", category:"post-transition", group:14, period:6, electronegativity:1.87, summary:"Dense metal; toxic; used in batteries" },
+  { number:83, symbol:"Bi", name_en:"Bismuth", name_kh:"ប៊ីស្មុត", atomic_mass:"208.98", category:"post-transition", group:15, period:6, electronegativity:2.02, summary:"Heavy metal; used in alloys" },
+  { number:84, symbol:"Po", name_en:"Polonium", name_kh:"បូលូន្យូម", atomic_mass:"(209)", category:"metalloid", group:16, period:6, electronegativity:2.0, summary:"Radioactive element" },
+  { number:85, symbol:"At", name_en:"Astatine", name_kh:"អាស្តាទីន", atomic_mass:"(210)", category:"halogen", group:17, period:6, electronegativity:2.2, summary:"Rarest halogen; radioactive" },
+  { number:86, symbol:"Rn", name_en:"Radon", name_kh:"រ៉ាដុន", atomic_mass:"(222)", category:"noble", group:18, period:6, electronegativity:null, summary:"Radioactive noble gas" },
+  
+  // Period 7
+  { number:87, symbol:"Fr", name_en:"Francium", name_kh:"ហ្វ្រ៉ង់ស្យូម", atomic_mass:"(223)", category:"alkali", group:1, period:7, electronegativity:0.7, summary:"Most reactive alkali metal; radioactive" },
+  { number:88, symbol:"Ra", name_en:"Radium", name_kh:"រ៉ាដ្យូម", atomic_mass:"(226)", category:"alkaline", group:2, period:7, electronegativity:0.9, summary:"Radioactive; used in medicine" },
+  { number:89, symbol:"Ac", name_en:"Actinium", name_kh:"អាក់ទីន្យូម", atomic_mass:"(227)", category:"act", group:null, period:7, electronegativity:1.1, summary:"First actinide; radioactive" },
+  { number:104, symbol:"Rf", name_en:"Rutherfordium", name_kh:"រុទើហ្វើដ្យូម", atomic_mass:"(261)", category:"transition", group:4, period:7, electronegativity:null, summary:"Synthetic element; radioactive" },
+  { number:105, symbol:"Db", name_en:"Dubnium", name_kh:"ឌុបន្យូម", atomic_mass:"(262)", category:"transition", group:5, period:7, electronegativity:null, summary:"Synthetic element; radioactive" },
+  { number:106, symbol:"Sg", name_en:"Seaborgium", name_kh:"ស៊ីប័រហ្គ្យូម", atomic_mass:"(266)", category:"transition", group:6, period:7, electronegativity:null, summary:"Synthetic element; radioactive" },
+  { number:107, symbol:"Bh", name_en:"Bohrium", name_kh:"បូហ្រ្យូម", atomic_mass:"(264)", category:"transition", group:7, period:7, electronegativity:null, summary:"Synthetic element; radioactive" },
+  { number:108, symbol:"Hs", name_en:"Hassium", name_kh:"ហាស្ស្យូម", atomic_mass:"(277)", category:"transition", group:8, period:7, electronegativity:null, summary:"Synthetic element; radioactive" },
+  { number:109, symbol:"Mt", name_en:"Meitnerium", name_kh:"ម៉ែតនេរីយូម", atomic_mass:"(268)", category:"transition", group:9, period:7, electronegativity:null, summary:"Synthetic element; radioactive" },
+  { number:110, symbol:"Ds", name_en:"Darmstadtium", name_kh:"ដាមស្តាត្យូម", atomic_mass:"(281)", category:"transition", group:10, period:7, electronegativity:null, summary:"Synthetic element; radioactive" },
+  { number:111, symbol:"Rg", name_en:"Roentgenium", name_kh:"រ៉ូនតេន្យូម", atomic_mass:"(282)", category:"transition", group:11, period:7, electronegativity:null, summary:"Synthetic element; radioactive" },
+  { number:112, symbol:"Cn", name_en:"Copernicium", name_kh:"កូប៊ែនិស្យូម", atomic_mass:"(285)", category:"transition", group:12, period:7, electronegativity:null, summary:"Synthetic element; radioactive" },
+  { number:113, symbol:"Nh", name_en:"Nihonium", name_kh:"នីហូន្យូម", atomic_mass:"(284)", category:"post-transition", group:13, period:7, electronegativity:null, summary:"Synthetic element; radioactive" },
+  { number:114, symbol:"Fl", name_en:"Flerovium", name_kh:"ហ្វ្លេរូវ្យូម", atomic_mass:"(289)", category:"post-transition", group:14, period:7, electronegativity:null, summary:"Synthetic element; radioactive" },
+  { number:115, symbol:"Mc", name_en:"Moscovium", name_kh:"ម៉ូស្កូវ្យូម", atomic_mass:"(288)", category:"post-transition", group:15, period:7, electronegativity:null, summary:"Synthetic element; radioactive" },
+  { number:116, symbol:"Lv", name_en:"Livermorium", name_kh:"លីវ៉ើម៉ូរីយូម", atomic_mass:"(293)", category:"post-transition", group:16, period:7, electronegativity:null, summary:"Synthetic element; radioactive" },
+  { number:117, symbol:"Ts", name_en:"Tennessine", name_kh:"តេនេស្ស៊ីន", atomic_mass:"(294)", category:"halogen", group:17, period:7, electronegativity:null, summary:"Synthetic element; radioactive" },
+  { number:118, symbol:"Og", name_en:"Oganesson", name_kh:"អូហ្គាណេសុន", atomic_mass:"(294)", category:"noble", group:18, period:7, electronegativity:null, summary:"Synthetic element; radioactive" },
+  
+  // Lanthanides (Period 6, row 9)
+  { number:58, symbol:"Ce", name_en:"Cerium", name_kh:"សេរីយូម", atomic_mass:"140.12", category:"lanth", group:null, period:6, electronegativity:1.12, summary:"Most abundant lanthanide; used in catalysts" },
+  { number:59, symbol:"Pr", name_en:"Praseodymium", name_kh:"ប្រាសេអូដ្យីម្យូម", atomic_mass:"140.91", category:"lanth", group:null, period:6, electronegativity:1.13, summary:"Used in magnets and alloys" },
+  { number:60, symbol:"Nd", name_en:"Neodymium", name_kh:"នេអូដ្យីម្យូម", atomic_mass:"144.24", category:"lanth", group:null, period:6, electronegativity:1.14, summary:"Strong magnets; used in headphones" },
+  { number:61, symbol:"Pm", name_en:"Promethium", name_kh:"ប្រូមេទ្យូម", atomic_mass:"(145)", category:"lanth", group:null, period:6, electronegativity:1.13, summary:"Radioactive lanthanide" },
+  { number:62, symbol:"Sm", name_en:"Samarium", name_kh:"សាម៉ារីយូម", atomic_mass:"150.36", category:"lanth", group:null, period:6, electronegativity:1.17, summary:"Used in permanent magnets" },
+  { number:63, symbol:"Eu", name_en:"Europium", name_kh:"អឺរ៉ុប្យូម", atomic_mass:"151.96", category:"lanth", group:null, period:6, electronegativity:null, summary:"Used in red phosphors" },
+  { number:64, symbol:"Gd", name_en:"Gadolinium", name_kh:"ហ្គាដូលីន្យូម", atomic_mass:"157.25", category:"lanth", group:null, period:6, electronegativity:1.20, summary:"Used in MRI contrast agents" },
+  { number:65, symbol:"Tb", name_en:"Terbium", name_kh:"តេប្យូម", atomic_mass:"158.93", category:"lanth", group:null, period:6, electronegativity:null, summary:"Used in green phosphors" },
+  { number:66, symbol:"Dy", name_en:"Dysprosium", name_kh:"ឌីស្ប្រូស្យូម", atomic_mass:"162.50", category:"lanth", group:null, period:6, electronegativity:1.22, summary:"Used in magnets and lasers" },
+  { number:67, symbol:"Ho", name_en:"Holmium", name_kh:"ហូល្ម្យូម", atomic_mass:"164.93", category:"lanth", group:null, period:6, electronegativity:1.23, summary:"Strongest magnetic field; used in magnets" },
+  { number:68, symbol:"Er", name_en:"Erbium", name_kh:"អ៊ែប្យូម", atomic_mass:"167.26", category:"lanth", group:null, period:6, electronegativity:1.24, summary:"Used in fiber optics" },
+  { number:69, symbol:"Tm", name_en:"Thulium", name_kh:"ទូល្ម្យូម", atomic_mass:"168.93", category:"lanth", group:null, period:6, electronegativity:1.25, summary:"Rarest stable lanthanide" },
+  { number:70, symbol:"Yb", name_en:"Ytterbium", name_kh:"យត្តេប្យូម", atomic_mass:"173.04", category:"lanth", group:null, period:6, electronegativity:null, summary:"Used in atomic clocks" },
+  { number:71, symbol:"Lu", name_en:"Lutetium", name_kh:"លូតេត្យូម", atomic_mass:"174.97", category:"lanth", group:null, period:6, electronegativity:1.27, summary:"Last lanthanide; used in PET scans" },
+  
+  // Actinides (Period 7, row 10)
+  { number:90, symbol:"Th", name_en:"Thorium", name_kh:"ថូរីយូម", atomic_mass:"232.04", category:"act", group:null, period:7, electronegativity:1.3, summary:"Radioactive; potential nuclear fuel" },
+  { number:91, symbol:"Pa", name_en:"Protactinium", name_kh:"ប្រូតាក់ទីន្យូម", atomic_mass:"231.04", category:"act", group:null, period:7, electronegativity:1.5, summary:"Rare radioactive element" },
+  { number:92, symbol:"U", name_en:"Uranium", name_kh:"អ៊ុរ៉ាន្យូម", atomic_mass:"238.03", category:"act", group:null, period:7, electronegativity:1.38, summary:"Nuclear fuel; radioactive" },
+  { number:93, symbol:"Np", name_en:"Neptunium", name_kh:"នេបតុន្យូម", atomic_mass:"(237)", category:"act", group:null, period:7, electronegativity:1.36, summary:"Synthetic radioactive element" },
+  { number:94, symbol:"Pu", name_en:"Plutonium", name_kh:"ប្លូតុន្យូម", atomic_mass:"(244)", category:"act", group:null, period:7, electronegativity:1.28, summary:"Nuclear fuel; radioactive" },
+  { number:95, symbol:"Am", name_en:"Americium", name_kh:"អាមេរីស្យូម", atomic_mass:"(243)", category:"act", group:null, period:7, electronegativity:1.3, summary:"Used in smoke detectors" },
+  { number:96, symbol:"Cm", name_en:"Curium", name_kh:"គូរីយូម", atomic_mass:"(247)", category:"act", group:null, period:7, electronegativity:1.3, summary:"Synthetic radioactive element" },
+  { number:97, symbol:"Bk", name_en:"Berkelium", name_kh:"ប៊ែកេល្យូម", atomic_mass:"(247)", category:"act", group:null, period:7, electronegativity:1.3, summary:"Synthetic radioactive element" },
+  { number:98, symbol:"Cf", name_en:"Californium", name_kh:"កាលីហ្វើន្យូម", atomic_mass:"(251)", category:"act", group:null, period:7, electronegativity:1.3, summary:"Synthetic radioactive element" },
+  { number:99, symbol:"Es", name_en:"Einsteinium", name_kh:"អែនស្តេន្យូម", atomic_mass:"(252)", category:"act", group:null, period:7, electronegativity:1.3, summary:"Synthetic radioactive element" },
+  { number:100, symbol:"Fm", name_en:"Fermium", name_kh:"ហ្វែម្យូម", atomic_mass:"(257)", category:"act", group:null, period:7, electronegativity:1.3, summary:"Synthetic radioactive element" },
+  { number:101, symbol:"Md", name_en:"Mendelevium", name_kh:"មេនដេលេវ្យូម", atomic_mass:"(258)", category:"act", group:null, period:7, electronegativity:1.3, summary:"Synthetic radioactive element" },
+  { number:102, symbol:"No", name_en:"Nobelium", name_kh:"នូបេល្យូម", atomic_mass:"(259)", category:"act", group:null, period:7, electronegativity:1.3, summary:"Synthetic radioactive element" },
+  { number:103, symbol:"Lr", name_en:"Lawrencium", name_kh:"ឡូរេនស្យូម", atomic_mass:"(262)", category:"act", group:null, period:7, electronegativity:null, summary:"Synthetic radioactive element" }
+];
+
+/* Category -> class name and emoji */
+const CAT_MAP = {
+  "alkali": { cls:"cat-alkali", label_en:"Alkali metal", label_kh:"លោហៈអាល់កាឡាំង", emoji:"🧲" },
+  "alkaline": { cls:"cat-alkaline", label_en:"Alkaline earth metal", label_kh:"លោហៈអាល់កាឡាំងដី", emoji:"⚗️" },
+  "transition": { cls:"cat-transition", label_en:"Transition metal", label_kh:"លោហៈឆ្លង", emoji:"🔩" },
+  "post-transition": { cls:"cat-post", label_en:"Post-transition metal", label_kh:"រលោហៈដទៃ", emoji:"🔧" },
+  "metalloid": { cls:"cat-metalloid", label_en:"Metalloid", label_kh:"អំផូទែ", emoji:"🔶" },
+  "nonmetal": { cls:"cat-nonmetal", label_en:"Other nonmetal", label_kh:"អរលោហៈដទៃ", emoji:"🌬️" },
+  "halogen": { cls:"cat-halogen", label_en:"Halogen", label_kh:"អាឡូសែន", emoji:"🧪" },
+  "noble": { cls:"cat-noble", label_en:"Noble gas", label_kh:"ឧស្ម័ននិចល", emoji:"🎈" },
+  "lanth": { cls:"cat-lanth", label_en:"Lanthanide", label_kh:"លោហៈឡង់តានីត", emoji:"🔬" },
+  "act": { cls:"cat-act", label_en:"Actinide", label_kh:"លោហៈអាក់ទីនីត", emoji:"☢️" }
+};
+
+const PROP_KEYS = {
+  en: ['Number', 'Symbol', 'Name (KH)', 'Atomic mass', 'Category', 'Electronegativity', 'Period / Group'],
+  kh: ['លេខអាតូម', 'និមិត្តសញ្ញា', 'ឈ្មោះធាតុគីមី', 'ម៉ាសអាតូម', 'ប្រភេទ', 'អេឡិចត្រូណេកាទីវីតេ', 'រយៈពេល / ក្រុម']
+};
+
+/* Complete grid position map for all 118 elements */
+function getGridPosition(num) {
+  const posMap = {
+    // Period 1
+    1: {col:1, row:1}, 2:{col:18, row:1},
+    // Period 2
+    3:{col:1, row:2}, 4:{col:2, row:2}, 5:{col:13, row:2}, 6:{col:14, row:2}, 7:{col:15, row:2}, 8:{col:16, row:2}, 9:{col:17, row:2}, 10:{col:18, row:2},
+    // Period 3
+    11:{col:1, row:3}, 12:{col:2, row:3}, 13:{col:13, row:3}, 14:{col:14, row:3}, 15:{col:15, row:3}, 16:{col:16, row:3}, 17:{col:17, row:3}, 18:{col:18, row:3},
+    // Period 4
+    19:{col:1, row:4}, 20:{col:2, row:4}, 21:{col:3, row:4}, 22:{col:4, row:4}, 23:{col:5, row:4}, 24:{col:6, row:4}, 25:{col:7, row:4}, 26:{col:8, row:4}, 27:{col:9, row:4}, 28:{col:10, row:4}, 29:{col:11, row:4}, 30:{col:12, row:4}, 31:{col:13, row:4}, 32:{col:14, row:4}, 33:{col:15, row:4}, 34:{col:16, row:4}, 35:{col:17, row:4}, 36:{col:18, row:4},
+    // Period 5
+    37:{col:1, row:5}, 38:{col:2, row:5}, 39:{col:3, row:5}, 40:{col:4, row:5}, 41:{col:5, row:5}, 42:{col:6, row:5}, 43:{col:7, row:5}, 44:{col:8, row:5}, 45:{col:9, row:5}, 46:{col:10, row:5}, 47:{col:11, row:5}, 48:{col:12, row:5}, 49:{col:13, row:5}, 50:{col:14, row:5}, 51:{col:15, row:5}, 52:{col:16, row:5}, 53:{col:17, row:5}, 54:{col:18, row:5},
+    // Period 6
+    55:{col:1, row:6}, 56:{col:2, row:6}, 57:{col:3, row:6}, 72:{col:4, row:6}, 73:{col:5, row:6}, 74:{col:6, row:6}, 75:{col:7, row:6}, 76:{col:8, row:6}, 77:{col:9, row:6}, 78:{col:10, row:6}, 79:{col:11, row:6}, 80:{col:12, row:6}, 81:{col:13, row:6}, 82:{col:14, row:6}, 83:{col:15, row:6}, 84:{col:16, row:6}, 85:{col:17, row:6}, 86:{col:18, row:6},
+    // Period 7
+    87:{col:1, row:7}, 88:{col:2, row:7}, 89:{col:3, row:7}, 104:{col:4, row:7}, 105:{col:5, row:7}, 106:{col:6, row:7}, 107:{col:7, row:7}, 108:{col:8, row:7}, 109:{col:9, row:7}, 110:{col:10, row:7}, 111:{col:11, row:7}, 112:{col:12, row:7}, 113:{col:13, row:7}, 114:{col:14, row:7}, 115:{col:15, row:7}, 116:{col:16, row:7}, 117:{col:17, row:7}, 118:{col:18, row:7},
+    // Lanthanides (row 9)
+    58:{col:4, row:9}, 59:{col:5, row:9}, 60:{col:6, row:9}, 61:{col:7, row:9}, 62:{col:8, row:9}, 63:{col:9, row:9}, 64:{col:10, row:9}, 65:{col:11, row:9}, 66:{col:12, row:9}, 67:{col:13, row:9}, 68:{col:14, row:9}, 69:{col:15, row:9}, 70:{col:16, row:9}, 71:{col:17, row:9},
+    // Actinides (row 10)
+    90:{col:4, row:10}, 91:{col:5, row:10}, 92:{col:6, row:10}, 93:{col:7, row:10}, 94:{col:8, row:10}, 95:{col:9, row:10}, 96:{col:10, row:10}, 97:{col:11, row:10}, 98:{col:12, row:10}, 99:{col:13, row:10}, 100:{col:14, row:10}, 101:{col:15, row:10}, 102:{col:16, row:10}, 103:{col:17, row:10}
+  };
+  return posMap[num] || {col:1, row:1};
+}
+
+/* Build grid: 7 main rows + 2 lanthanide/actinide rows + 1 gap = 10 rows */
+const TOTAL_ROWS = 10;
+const TOTAL_COLS = 18;
+
+/* Utility: create element card */
+function createCard(el, index, lang){
+  const wrapper = document.createElement('div');
+  wrapper.className = 'card animated ' + (CAT_MAP[el.category]?.cls || 'cat-post');
+  wrapper.setAttribute('tabindex', '0');
+  wrapper.setAttribute('role','button');
+  wrapper.setAttribute('data-number', el.number);
+  wrapper.setAttribute('data-symbol', el.symbol.toLowerCase());
+  wrapper.setAttribute('data-name-en', el.name_en.toLowerCase());
+  wrapper.setAttribute('data-name-kh', el.name_kh.toLowerCase());
+  wrapper.style.animationDelay = (index * 0.03) + 's';
+
+  // inner HTML
+  wrapper.innerHTML = `
+    <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+      <div class="num">${el.number}</div>
+      <div class="mass">${el.atomic_mass}</div>
+    </div>
+    <div style="display:flex; flex-direction:column; align-items:flex-start;">
+      <div class="symbol">${el.symbol}</div>
+      <div class="name" style="font-family: ${el.name_kh && lang==='kh' ? 'Khmer OS, KhmerOS, Noto Sans Khmer, Inter' : 'Inter'}">${lang==='kh' ? el.name_kh : el.name_en}</div>
+    </div>
+  `;
+
+  // show modal on click / enter
+  wrapper.addEventListener('click', ()=> openModal(el));
+  wrapper.addEventListener('keydown', (e)=> { if(e.key === 'Enter') openModal(el); });
+
+  return wrapper;
+}
+
+/* Populate grid with placeholders and cards */
+const gridEl = document.getElementById('grid');
+let currentLang = 'en';
+let allCards = [];
+
+function buildGrid(lang='en'){
+  gridEl.innerHTML = '';
+  allCards = [];
+
+  // create a matrix of placeholders
+  for(let r=1;r<=TOTAL_ROWS;r++){
+    for(let c=1;c<=TOTAL_COLS;c++){
+      const item = document.createElement('div');
+      item.className = 'empty';
+      item.style.gridColumn = `${c}`;
+      item.style.gridRow = `${r}`;
+      gridEl.appendChild(item);
+    }
+  }
+
+  // place elements in correct positions
+  ELEMENTS.forEach((el, i)=>{
+    const pos = getGridPosition(el.number);
+    const card = createCard(el, i, lang);
+    card.style.gridColumn = pos.col;
+    card.style.gridRow = pos.row;
+    card.dataset.index = i;
+    card.title = `${el.number} • ${el.symbol} • ${el.name_en}`;
+    gridEl.appendChild(card);
+    allCards.push(card);
+  });
+}
+
+function updateLegend(lang) {
+  const chips = document.querySelectorAll('.legend .chip');
+  const cats = Object.keys(CAT_MAP);
+  chips.forEach((chip, i) => {
+    chip.textContent = CAT_MAP[cats[i]]['label_' + lang];
+    if(lang === 'kh') {
+      chip.style.fontFamily = 'Khmer OS, KhmerOS, Noto Sans Khmer, Inter';
+    } else {
+      chip.style.fontFamily = 'Inter, sans-serif';
+    }
+  });
+}
+
+function updateFooter(lang) {
+  const info = document.getElementById('footerInfo');
+  const design = document.getElementById('footerDesign');
+  if(lang === 'kh') {
+    info.textContent = '💡 ព័ត៌មាន: ប្រើប្រអប់ស្វែងរកដើម្បីវាយ "26", "Fe", "ដែក" ឬ "Iron". ចុច <kbd>Esc</kbd> ដើម្បីបិទ modal. ពណ៌បង្ហាញប្រភេទ — hover កាតដើម្បីមើលព័ត៌មានលម្អិត shine.';
+    info.style.fontFamily = 'Khmer OS, KhmerOS, Noto Sans Khmer, Inter';
+    design.innerHTML = 'រចនាដោយ <strong>Hak Yany+AI</strong>';
+    design.style.fontFamily = 'Khmer OS, KhmerOS, Noto Sans Khmer, Inter';
+  } else {
+    info.textContent = '💡 Tip: Use the search box to type "26", "Fe", "ដែក" or "Iron". Press <kbd>Esc</kbd> to close modals. The colors show categories — hover a card to see shine effect.';
+    info.style.fontFamily = 'Inter, sans-serif';
+    design.innerHTML = 'Designed by <strong>Hak Yany+AI</strong>';
+    design.style.fontFamily = 'Inter, sans-serif';
+  }
+}
+
+function updateSubtitle(lang) {
+  const subtitle = document.getElementById('subtitle');
+  if(lang === 'kh') {
+    subtitle.textContent = 'ស្វែងរកធាតុដោយលេខ, និមិត្តសញ្ញា, ឈ្មោះខ្មែរ ឬអង់គ្លេស • ចុចកាតដើម្បីមើលព័ត៌មានលម្អិត';
+    subtitle.classList.add('khmer');
+  } else {
+    subtitle.textContent = 'Search elements by number, symbol, Khmer or English name • Click a card for details';
+    subtitle.classList.remove('khmer');
+  }
+}
+
+function updateTitle(lang) {
+  const title = document.getElementById('mainTitle');
+  if(lang === 'kh') {
+    title.textContent = 'តារាងខួបនៃធាតុគីមី — Periodic Table';
+    title.classList.add('khmer');
+  } else {
+    title.textContent = 'Periodic Table — តារាងខួបនៃធាតុគីមី';
+    title.classList.remove('khmer');
+  }
+}
+
+function updatePlaceholder(lang) {
+  searchInput.placeholder = lang === 'kh' ? 'ស្វែងរកលេខ • និមិត្តសញ្ញា • ឈ្មោះ (ខ្មែរ / អង់គ្លេស)' : 'Search number • symbol • name (Kh / En)';
+}
+
+function updateInfoSection(lang) {
+  const title = document.getElementById('infoTitle');
+  const text = document.getElementById('infoText');
+  if(lang === 'kh') {
+    title.style.fontFamily = 'Khmer OS, KhmerOS, Noto Sans Khmer, Inter';
+    text.style.fontFamily = 'Khmer OS, KhmerOS, Noto Sans Khmer, Inter';
+    title.textContent = 'អំពីតារាងខួបនៃធាតុគីមី';
+    text.textContent = 'តារាងខួបនៃធាតុគីមីគឺជាការរៀបចំធាតុគីមីក្នុងទម្រង់តារាង ដែលត្រូវបានរៀបចំតាមលេខអាតូម, ការកំណត់រចនាសម្ព័ន្ធអេឡិចត្រុង, និងលក្ខណៈសម្បត្តិគីមីដែលកើតឡើងដដែលៗ។ ធាតុត្រូវបានរាយតាមលំដាប់លេខអាតូមកើនឡើង និងត្រូវបានដាក់ជាក្រុមតាមឥរិយាបថគីមីស្រដៀងគ្នា។';
+  } else {
+    title.style.fontFamily = 'Inter, sans-serif';
+    text.style.fontFamily = 'Inter, sans-serif';
+    title.textContent = 'About the Periodic Table';
+    text.textContent = 'The periodic table is a tabular arrangement of chemical elements, ordered by atomic number, electron configuration, and recurring chemical properties. Elements are listed in order of increasing atomic number and grouped according to similar chemical behavior.';
+  }
+}
+
+/* Modal behavior */
+const modalBackdrop = document.getElementById('modalBackdrop');
+const modalTitle = document.getElementById('modalTitle');
+const modalSubtitle = document.getElementById('modalSubtitle');
+const modalProps = document.getElementById('modalProps');
+const modalSummary = document.getElementById('modalSummary');
+const closeBtn = document.getElementById('closeModal');
+
+function openModal(el){
+  modalBackdrop.style.display = 'flex';
+  modalBackdrop.setAttribute('aria-hidden','false');
+  // fill content
+  modalTitle.textContent = `${el.symbol} — ${currentLang === 'kh' ? el.name_kh : el.name_en}`;
+  modalSubtitle.textContent = `${el.number} • ${el.atomic_mass} • ${CAT_MAP[el.category]['label_' + currentLang] || el.category}`;
+  modalSummary.textContent = `${el.summary || ''}`;
+
+  modalProps.innerHTML = '';
+  const props = [
+    {v:el.number, emoji:'🔢'},
+    {v:el.symbol, emoji:'🔠'},
+    {v:el.name_kh, emoji:'🈶'},
+    {v:el.atomic_mass, emoji:'⚖️'},
+    {v:CAT_MAP[el.category]['label_' + currentLang] || el.category, emoji: CAT_MAP[el.category]?.emoji || '🧪'},
+    {v: el.electronegativity ?? '—', emoji:'⚡'},
+    {v: `${el.period ?? '—'} / ${el.group ?? '—'}`, emoji:'📐' }
+  ];
+  props.forEach((p, i)=>{
+    const d = document.createElement('div');
+    d.className = 'prop';
+    d.innerHTML = `<div style="font-size:18px">${p.emoji}</div><div><div style="font-weight:700">${PROP_KEYS[currentLang][i]}</div><div style="opacity:0.9">${p.v}</div></div>`;
+    modalProps.appendChild(d);
+  });
+
+  // close on backdrop click
+  modalBackdrop.addEventListener('click', backdropClose);
+}
+
+function backdropClose(e){
+  if(e.target === modalBackdrop) closeModal();
+}
+
+function closeModal(){
+  modalBackdrop.style.display = 'none';
+  modalBackdrop.setAttribute('aria-hidden','true');
+  modalBackdrop.removeEventListener('click', backdropClose);
+}
+
+/* Controls: search, reset, language toggle */
+const searchInput = document.getElementById('searchInput');
+const resetBtn = document.getElementById('resetBtn');
+const langToggle = document.getElementById('langToggle');
+const langLabel = document.getElementById('langLabel');
+const infoBtn = document.getElementById('infoBtn');
+
+function normalize(s){ return String(s || '').toLowerCase().trim(); }
+
+let searchTimeout = null;
+let firstMatchScrolled = false;
+
+function performSearch(){
+  const q = normalize(searchInput.value);
+  firstMatchScrolled = false;
+  
+  // no query -> remove found and restore all
+  if(!q){
+    allCards.forEach(c=> {
+      c.classList.remove('found', 'search-active');
+    });
+    gridEl.classList.remove('search-active');
+    return;
+  }
+
+  // Add search-active class to grid for styling
+  gridEl.classList.add('search-active');
+  
+  let firstMatch = null;
+  let matchCount = 0;
+
+  // mark found cards by test number / symbol / names
+  allCards.forEach((card)=>{
+    const num = Number(card.dataset.number);
+    const el = ELEMENTS.find(e => e.number === num);
+    if(!el) return;
+    
+    const matches = (
+      String(el.number) === q ||
+      normalize(el.symbol) === q ||
+      normalize(el.name_en).includes(q) ||
+      normalize(el.name_kh).includes(q) ||
+      normalize(el.symbol).startsWith(q) ||
+      normalize(el.name_en).startsWith(q) ||
+      normalize(el.name_kh).startsWith(q)
+    );
+    
+    if(matches){
+      card.classList.add('found');
+      card.classList.remove('search-active');
+      matchCount++;
+      // Store first match for scrolling
+      if(!firstMatch) firstMatch = card;
+    } else {
+      card.classList.remove('found');
+      card.classList.add('search-active');
+    }
+  });
+
+  // Smooth scroll to first match only once
+  if(firstMatch && !firstMatchScrolled){
+    firstMatchScrolled = true;
+    setTimeout(() => {
+      firstMatch.scrollIntoView({behavior:'smooth', block:'center', inline:'center'});
+    }, 100);
+  }
+}
+
+/* Reset */
+function resetSearch(){
+  searchInput.value = '';
+  allCards.forEach(c=> {
+    c.classList.remove('found', 'search-active');
+  });
+  gridEl.classList.remove('search-active');
+  firstMatchScrolled = false;
+}
+
+/* Language toggle */
+function toggleLang(){
+  currentLang = currentLang === 'en' ? 'kh' : 'en';
+  langLabel.textContent = currentLang === 'en' ? 'EN' : 'KH';
+  langToggle.innerHTML = currentLang === 'en' ? '🌐 <span id="langLabel">EN</span>' : '🌐 <span id="langLabel">KH</span>';
+  document.getElementById('langLabel').textContent = currentLang === 'en' ? 'EN' : 'KH';
+  // rebuild affecting displayed name
+  buildGrid(currentLang);
+  // re-run search highlight if any
+  performSearch();
+  updateLegend(currentLang);
+  updateFooter(currentLang);
+  updateSubtitle(currentLang);
+  updateTitle(currentLang);
+  updatePlaceholder(currentLang);
+  updateInfoSection(currentLang);
+}
+
+/* Info button */
+function toggleInfo(){
+  const infoSection = document.getElementById('infoSection');
+  if(infoSection.style.display === 'none'){
+    infoSection.style.display = 'block';
+    infoBtn.textContent = currentLang === 'kh' ? '✖️ បិទ' : '✖️ Close';
+  } else {
+    infoSection.style.display = 'none';
+    infoBtn.textContent = 'ℹ️ Info';
+  }
+}
+
+/* Keyboard support: ESC to close modal */
+document.addEventListener('keydown', (e)=>{
+  if(e.key === 'Escape') {
+    closeModal();
+    const infoSection = document.getElementById('infoSection');
+    if(infoSection.style.display === 'block') {
+      infoSection.style.display = 'none';
+      infoBtn.textContent = 'ℹ️ Info';
+    }
+  }
+});
+
+/* Attach events with debouncing for smooth search */
+searchInput.addEventListener('input', ()=> {
+  // Clear previous timeout
+  if(searchTimeout) clearTimeout(searchTimeout);
+  
+  // Debounce search for smoother performance
+  searchTimeout = setTimeout(() => {
+    performSearch();
+  }, 150);
+});
+
+// Also search on paste
+searchInput.addEventListener('paste', ()=> {
+  if(searchTimeout) clearTimeout(searchTimeout);
+  searchTimeout = setTimeout(() => {
+    performSearch();
+  }, 150);
+});
+resetBtn.addEventListener('click', ()=> { resetSearch(); searchInput.focus(); });
+langToggle.addEventListener('click', toggleLang);
+closeBtn.addEventListener('click', closeModal);
+infoBtn.addEventListener('click', toggleInfo);
+
+/* Init */
+buildGrid(currentLang);
+updateLegend(currentLang);
+updateFooter(currentLang);
+updateSubtitle(currentLang);
+updateTitle(currentLang);
+updatePlaceholder(currentLang);
+updateInfoSection(currentLang);
+
+/* Accessibility: focus outline */
+document.addEventListener('focusin', (e)=> {
+  if(e.target.classList && e.target.classList.contains('card')){
+    e.target.style.outline = '3px solid rgba(255,255,255,0.06)';
+  }
+});
+document.addEventListener('focusout', (e)=> {
+  if(e.target.classList && e.target.classList.contains('card')){
+    e.target.style.outline = 'none';
+  }
+});
+
+/* Small flourish: play sequential reveal */
+setTimeout(()=> {
+  document.querySelectorAll('.card.animated').forEach((c, idx)=> {
+    c.style.animationDelay = (idx * 0.03) + 's';
+  });
+}, 80);
+
+</script>
+</body>
+</html>
